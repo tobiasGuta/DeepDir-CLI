@@ -25,12 +25,13 @@ from pathlib import Path
 # Version format: <major version>.<minor version>.<revision>[.<month>]
 VERSION = "0.4.3"
 
-BANNER = f"""
-      _ _                              _     
-   __| (_)_ __ ___  ___  __ _ _ __ ___| |__  
-  / _` | | '__/ __|/ _ \/ _` | '__/ __| '_ \ 
- | (_| | | |  \__ \  __/ (_| | | | (__| | | |
-  \__,_|_|_|  |___/\___|\__,_|_|  \___|_| |_|
+BANNER = fr"""
+  ____                  ____  _          ____ _     ___ 
+ |  _ \ ___  ___ _ __  |  _ \(_)_ __    / ___| |   |_ _|
+ | | | / _ \/ _ \ '_ \ | | | | | '__|  | |   | |    | | 
+ | |_| |  __/  __/ |_) || |_| | | |     | |___| |___ | | 
+ |____/ \___|\___| .__/ |____/|_|_|      \____|_____|___|
+                 |_|                                     
                                              
   v{VERSION} | Modified Version
 """
@@ -106,7 +107,7 @@ ROBOTS_TXT_REGEX = r"(?:Allow|Disallow): /(.*)"
 
 UNKNOWN = "unknown"
 
-TMP_PATH = "/tmp/DeepDir"
+TMP_PATH = "/tmp/DeepDir-CLI"
 
 DUMMY_DOMAIN = "example.com"
 

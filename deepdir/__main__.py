@@ -29,7 +29,7 @@ from deepdir.core.settings import OPTIONS_FILE
 from deepdir.parse.config import ConfigParser
 
 if sys.version_info < (3, 9):
-    sys.stderr.write("Sorry, DeepDir requires Python 3.9 or higher\n")
+    sys.stderr.write("Sorry, DeepDir-CLI requires Python 3.9 or higher\n")
     sys.exit(1)
 
 # silence pkg_resources deprecation warnings
@@ -41,7 +41,7 @@ def main():
     config.read(OPTIONS_FILE)
 
     # Check for non-interactive mode environment variable
-    non_interactive = os.environ.get("DEEPDIR_NON_INTERACTIVE", "False").lower() == "true"
+    non_interactive = os.environ.get("DEEPDIR_CLI_NON_INTERACTIVE", "False").lower() == "true"
 
     if config.safe_getboolean("options", "check-dependencies", False):
         try:
@@ -52,7 +52,7 @@ def main():
                 sys.exit(1)
                 
             option = input("Missing required dependencies to run.\n"
-                           "Do you want DeepDir to automatically install them? [Y/n] ")
+                           "Do you want DeepDir-CLI to automatically install them? [Y/n] ")
 
             if option.lower() == 'y':
                 print("Installing required dependencies...")
@@ -60,7 +60,7 @@ def main():
                 try:
                     install_dependencies()
                 except FailedDependenciesInstallation:
-                    sys.stderr.write("Failed to install DeepDir dependencies, try doing it manually.\n")
+                    sys.stderr.write("Failed to install DeepDir-CLI dependencies, try doing it manually.\n")
                     sys.exit(1)
             else:
                 # Do not check for dependencies in the future

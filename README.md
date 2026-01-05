@@ -1,4 +1,4 @@
-# DeepDir - Web Path Discovery (Modified Version)
+# DeepDir-CLI - Web Path Discovery (Modified Version)
 
 > **Note:** This is a highly modified version of the original [DeepDir](https://github.com/maurosoria/DeepDir). It has been enhanced with forensic-grade output, advanced WAF detection, and a completely modernized codebase for better performance and reliability.
 
@@ -37,10 +37,10 @@ This version includes a major backend overhaul to adopt modern Python practices,
 
 *   **Robust Configuration:** The project no longer relies on a global dictionary for settings. It now uses a central `Config` dataclass, eliminating side effects and making the codebase more predictable.
 *   **Modern Concurrency:** The threading model has been upgraded from manual thread management to Python's `concurrent.futures.ThreadPoolExecutor` for cleaner, more efficient, and safer execution.
-*   **High-Performance Wordlist Handling:** Wordlists are now **streamed from disk** instead of being loaded into memory. This drastically reduces RAM usage, allowing `DeepDir` to handle massive wordlists (e.g., `rockyou.txt`) with a minimal memory footprint.
+*   **High-Performance Wordlist Handling:** Wordlists are now **streamed from disk** instead of being loaded into memory. This drastically reduces RAM usage, allowing `DeepDir-CLI` to handle massive wordlists (e.g., `rockyou.txt`) with a minimal memory footprint.
 *   **Test Suite:** A comprehensive test suite has been introduced (`tests/`), including unit tests for core logic and integration tests against a live mock server. This ensures new features and bug fixes do not introduce regressions.
 *   **Modern Path Handling:** All file and path operations have been migrated from `os.path` to `pathlib`, making the code more readable and cross-platform compatible.
-*   **CI/CD Friendly:** The dependency check now supports a non-interactive mode (`DEEPDIR_NON_INTERACTIVE=true`), preventing it from blocking automated workflows.
+*   **CI/CD Friendly:** The dependency check now supports a non-interactive mode (`DEEPDIR_CLI_NON_INTERACTIVE=true`), preventing it from blocking automated workflows.
 *   **Optimized Parsing:** The web crawler now uses `lxml` for faster HTML parsing when available.
 
 ---
@@ -65,7 +65,7 @@ This version includes a major backend overhaul to adopt modern Python practices,
 ## Usage
 
 ```bash
-python3 deepdir.py -u <URL> [options]
+deepdir-cli -u <URL> [options]
 ```
 
 ### New & Important Flags
@@ -82,17 +82,17 @@ python3 deepdir.py -u <URL> [options]
 
 **Simple Scan:**
 ```bash
-python3 deepdir.py -u https://target.com -e php,html,js
+deepdir-cli -u https://target.com -e php,html,js
 ```
 
 **WAF Bypass Scan with Random Agents:**
 ```bash
-python3 deepdir.py -u https://target.com --bypass-waf --random-agent
+deepdir-cli -u https://target.com --bypass-waf --random-agent
 ```
 
 **Forensic Scan (Calibration + Mutation):**
 ```bash
-python3 deepdir.py -u https://target.com --calibration --mutation
+deepdir-cli -u https://target.com --calibration --mutation
 ```
 
 ---
@@ -100,7 +100,7 @@ python3 deepdir.py -u https://target.com --calibration --mutation
 ## Full Options
 
 ```text
-Usage: deepdir.py [-u|--url] target [-e|--extensions] extensions [options]
+Usage: deepdir-cli [-u|--url] target [-e|--extensions] extensions [options]
 
 Options:
   --version             show program's version number and exit
@@ -120,7 +120,7 @@ Options:
     -s SESSION_FILE, --session=SESSION_FILE
                         Session file
     --config=PATH       Path to configuration file (Default:
-                        'DEEPDIR_CONFIG' environment variable, otherwise
+                        'DEEPDIR_CLI_CONFIG' environment variable, otherwise
                         'config.ini')
 
   Dictionary Settings:
@@ -131,7 +131,7 @@ Options:
                         Extension list, separated by commas (e.g. php,asp)
     -f, --force-extensions
                         Add extensions to the end of every wordlist entry. By
-                        default DeepDir only replaces the %EXT% keyword with
+                        default DeepDir-CLI only replaces the %EXT% keyword with
                         extensions
     --overwrite-extensions
                         Overwrite other extensions in the wordlist with your

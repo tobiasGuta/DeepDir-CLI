@@ -30,7 +30,7 @@ from deepdir.utils.common import get_config_file
 def parse_arguments() -> Values:
     usage = "Usage: %prog [-u|--url] target [-e|--extensions] extensions [options]"
     epilog = "See 'config.ini' for the example configuration file"
-    parser = OptionParser(usage=usage, epilog=epilog, version=f"DeepDir v{VERSION}")
+    parser = OptionParser(usage=usage, epilog=epilog, version=f"DeepDir-CLI v{VERSION}")
 
     # Mandatory arguments
     mandatory = OptionGroup(parser, "Mandatory")
@@ -76,7 +76,7 @@ def parse_arguments() -> Values:
         action="store",
         dest="config",
         metavar="PATH",
-        help="Path to configuration file (Default: 'DEEPDIR_CONFIG' environment variable, otherwise 'config.ini')",
+        help="Path to configuration file (Default: 'DEEPDIR_CLI_CONFIG' environment variable, otherwise 'config.ini')",
         default=get_config_file(),
     )
 
@@ -101,7 +101,7 @@ def parse_arguments() -> Values:
         "--force-extensions",
         action="store_true",
         dest="force_extensions",
-        help="Add extensions to the end of every wordlist entry. By default DeepDir only replaces the %EXT% keyword with extensions",
+        help="Add extensions to the end of every wordlist entry. By default DeepDir-CLI only replaces the %EXT% keyword with extensions",
     )
     dictionary.add_option(
         "--overwrite-extensions",
