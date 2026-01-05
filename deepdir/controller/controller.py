@@ -61,6 +61,7 @@ from deepdir.core.settings import (
     UNKNOWN,
 )
 from deepdir.core.waf import WAF
+from deepdir.core.tech_detect import TechDetect
 from deepdir.parse.rawrequest import parse_raw
 from deepdir.parse.url import clean_path, parse_path
 from deepdir.report.manager import ReportManager
@@ -138,6 +139,7 @@ class Controller:
         self.consecutive_errors = 0
         self.consecutive_filtered = 0
         self.results: list[BaseResponse] = []
+        self.detected_tech: set[str] = set()
 
         if options.log_file:
             try:
@@ -430,6 +432,10 @@ class Controller:
             )
 
         waf_result = WAF.analyze(response)
+        tech_result = TechDetect.analyze(response)
+        
+        if tech_result:
+            self.detected_tech.update(tech_result)
 
         interface.status_report(response, options.full_url, waf_result)
 
@@ -683,6 +689,11 @@ class Controller:
                 
                 print(f"{status_str} {count_str} {desc_str}")
             
+            if self.detected_tech:
+                interface.header("\n--- Tech Summary ---")
+                tech_str = " | ".join(sorted(self.detected_tech))
+                interface.warning(tech_str)
+
             try:
                 interface.in_line("\nEnter status code to view URLs (or 'q' to quit): ")
                 choice = input().strip().lower()

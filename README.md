@@ -29,6 +29,16 @@ Instead of just saying "403 Forbidden", this tool analyzes the response body and
 *   **`--bypass-waf`**: Integrated [`cloudscraper`](https://github.com/VeNoMouS/cloudscraper) to bypass anti-bot protections.
 *   **Smart User-Agents**: Uses `fake-useragent` library to generate realistic, up-to-date User-Agent strings.
 
+### 4. Recent Updates (v0.4.8)
+*   **Technology Stack Detection**: Integrated `python-Wappalyzer` to automatically detect over 1,000 technologies (CMS, frameworks, servers) running on the target.
+    *   Results are displayed in a dedicated **Tech Summary** at the end of the scan.
+*   **Interactive Summary**: At the end of a scan, a new interactive menu allows you to filter and view results by status code.
+    *   Displays a colored summary of all status codes found (e.g., `200`, `403`, `500`).
+    *   Includes helpful descriptions for each code.
+    *   Lets you drill down into specific codes to see the matching URLs without scrolling.
+*   **Improved UI**: The progress bar now automatically adapts to smaller terminal windows, ensuring the interface remains clean and readable.
+*   **Enhanced Stability**: Fixed issues with `CTRL+C` handling, ensuring the tool pauses and quits instantly without hanging or printing "leaky" output.
+
 ---
 
 ## Architectural & Code Quality Improvements
