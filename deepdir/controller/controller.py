@@ -70,6 +70,7 @@ from deepdir.utils.file import FileUtils
 from deepdir.utils.mutation import Mutator
 from deepdir.utils.schemedet import detect_scheme
 from deepdir.view.terminal import interface
+from deepdir.view.colors import set_color
 
 
 class Controller:
@@ -136,6 +137,7 @@ class Controller:
         self.errors = 0
         self.consecutive_errors = 0
         self.consecutive_filtered = 0
+        self.results: list[BaseResponse] = []
 
         if options.log_file:
             try:
@@ -253,6 +255,7 @@ class Controller:
 
         interface.warning("\nTask Completed")
         self.reporter.finish()
+        self.interactive_summary()
 
         if options.session_file:
             try:
@@ -420,6 +423,7 @@ class Controller:
 
     def match_callback(self, response: BaseResponse) -> None:
         self.consecutive_filtered = 0
+        self.results.append(response)
         if response.status in options.skip_on_status:
             raise SkipTargetInterrupt(
                 f"Skipped the target due to {response.status} status code"
@@ -618,5 +622,93 @@ class Controller:
     def recur_for_redirect(self, path: str, redirect_path: str) -> list[str]:
         if redirect_path == path + "/":
             return self.recur(redirect_path)
+        
+        return []
+
+    def interactive_summary(self) -> None:
+        if not self.results:
+            return
+
+        from collections import Counter
+        
+        STATUS_DESCRIPTIONS = {
+            200: "OK - Request fulfilled",
+            201: "Created - Resource created",
+            202: "Accepted - Request accepted for processing",
+            204: "No Content - Request fulfilled, nothing to return",
+            301: "Moved Permanently - Resource has moved",
+            302: "Found - Resource temporarily moved",
+            304: "Not Modified - Resource has not changed",
+            307: "Temporary Redirect",
+            308: "Permanent Redirect",
+            400: "Bad Request - Invalid syntax",
+            401: "Unauthorized - Authentication required",
+            403: "Forbidden - Server refuses to fulfill request",
+            404: "Not Found - Resource not found",
+            405: "Method Not Allowed",
+            410: "Gone - Resource no longer available",
+            418: "I'm a teapot",
+            429: "Too Many Requests - Rate limit exceeded",
+            500: "Internal Server Error",
+            502: "Bad Gateway",
+            503: "Service Unavailable",
+            504: "Gateway Timeout"
+        }
+
+        # Count status codes
+        status_counts = Counter(r.status for r in self.results)
+        
+        while True:
+            interface.header("\n--- Status Code Summary ---")
+            
+            for status, count in sorted(status_counts.items()):
+                # Determine color
+                if 200 <= status < 300:
+                    color = "green"
+                elif 300 <= status < 400:
+                    color = "yellow"
+                elif 400 <= status < 500:
+                    color = "red"
+                elif 500 <= status < 600:
+                    color = "magenta"
+                else:
+                    color = "white"
+                
+                desc = STATUS_DESCRIPTIONS.get(status, "Unknown Status")
+                
+                # Format: 200: 5 (OK)
+                status_str = set_color(f"{status}:", fore=color, style="bright")
+                count_str = set_color(str(count), fore="white", style="bright")
+                desc_str = set_color(f"({desc})", fore="cyan", style="dim")
+                
+                print(f"{status_str} {count_str} {desc_str}")
+            
+            try:
+                interface.in_line("\nEnter status code to view URLs (or 'q' to quit): ")
+                choice = input().strip().lower()
+                
+                if choice == 'q':
+                    break
+                
+                if not choice.isdigit():
+                    continue
+                    
+                code = int(choice)
+                if code not in status_counts:
+                    interface.warning(f"No results found for status code {code}")
+                    continue
+                
+                interface.header(f"\n--- Results for {code} ---")
+                for res in self.results:
+                    if res.status == code:
+                        # Format: [CODE] SIZE - URL
+                        msg = f"[{res.status}] {res.size} - {res.full_path}"
+                        if res.redirect:
+                            msg += f" -> {res.redirect}"
+                        print(msg)
+                        
+            except (KeyboardInterrupt, EOFError):
+                break
+
 
         return []
