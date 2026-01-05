@@ -113,6 +113,9 @@ deepdir-cli -u https://target.com --bypass-waf --random-agent
 ```bash
 deepdir-cli -u https://target.com --calibration --mutation
 ```
+---
+
+<img width="1378" height="720" alt="image" src="https://github.com/user-attachments/assets/cf5b86cf-a2bc-4d22-881c-1e9c96a03f8f" />
 
 ---
 
