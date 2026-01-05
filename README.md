@@ -51,8 +51,8 @@ This version includes a major backend overhaul to adopt modern Python practices,
 
 1.  Clone this repository:
     ```bash
-    git clone https://github.com/tobiasGuta/dirsearch-Modified-Version.git
-    cd dirsearch-Modified-Version
+    git clone https://github.com/tobiasGuta/DeepDir-CLI.git
+    cd DeepDir-CLI
     ```
 
 2.  Install dependencies:
