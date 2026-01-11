@@ -189,7 +189,12 @@ class Controller:
         else:
             from deepdir.connection.requester import Requester
             from deepdir.core.fuzzer import Fuzzer
-
+        
+        # Make Fuzzer and Requester available class-wide if imported consistently
+        # But since they are imported inside run(), we need to pass them or ensuring they are in scope.
+        # The easiest fix is to store the class reference or import at top level, 
+        # but to respect the async mode logic, we'll keep them here.
+        
         # match_callbacks and not_found_callbacks callback values:
         #  - *args[0]: lib.connection.Response() object
         #
@@ -212,48 +217,14 @@ class Controller:
 
         while options.urls:
             url = options.urls[0]
-            self.fuzzer = Fuzzer(
-                self.requester,
-                self.dictionary,
-                match_callbacks=match_callbacks,
-                not_found_callbacks=not_found_callbacks,
-                error_callbacks=error_callbacks,
-            )
+            
+            # Set primary method for the scan
+            if options.http_methods:
+                options.http_method = options.http_methods[0]
 
-            try:
-                self.set_target(url)
+            self.run_one_method(url, match_callbacks, not_found_callbacks, error_callbacks)
 
-                if not self.directories:
-                    for subdir in options.subdirs:
-                        self.add_directory(self.base_path + subdir)
-
-                if not self.old_session:
-                    interface.target(self.url)
-
-                self.reporter.prepare(self.url)
-                self.start()
-
-            except (
-                CannotConnectException,
-                FileExistsException,
-                InvalidURLException,
-                RequestException,
-                SkipTargetInterrupt,
-                KeyboardInterrupt,
-            ) as e:
-                self.directories.clear()
-                self.dictionary.reset()
-
-                if e.args:
-                    interface.error(str(e))
-
-            except QuitInterrupt as e:
-                self.reporter.finish()
-                interface.error(e.args[0])
-                exit(0)
-
-            finally:
-                options.urls.pop(0)
+            options.urls.pop(0)
 
         interface.warning("\nTask Completed")
         self.reporter.finish()
@@ -264,6 +235,53 @@ class Controller:
                 os.remove(options.session_file)
             except Exception:
                 interface.error("Failed to delete old session file, remove it to free some space")
+
+    def run_one_method(self, url, match_callbacks, not_found_callbacks, error_callbacks):
+        # Import Fuzzer locally again because it might be AsyncFuzzer or Fuzzer depending on context
+        if options.async_mode:
+             from deepdir.core.fuzzer import AsyncFuzzer as Fuzzer
+        else:
+             from deepdir.core.fuzzer import Fuzzer
+
+        self.fuzzer = Fuzzer(
+            self.requester,
+            self.dictionary,
+            match_callbacks=match_callbacks,
+            not_found_callbacks=not_found_callbacks,
+            error_callbacks=error_callbacks,
+        )
+
+        try:
+            self.set_target(url)
+
+            if not self.directories:
+                for subdir in options.subdirs:
+                    self.add_directory(self.base_path + subdir)
+
+            if not self.old_session:
+                interface.target(self.url)
+
+            self.reporter.prepare(self.url)
+            self.start()
+
+        except (
+            CannotConnectException,
+            FileExistsException,
+            InvalidURLException,
+            RequestException,
+            SkipTargetInterrupt,
+            KeyboardInterrupt,
+        ) as e:
+            self.directories.clear()
+            self.dictionary.reset()
+
+            if e.args:
+                interface.error(str(e))
+        
+        except QuitInterrupt as e:
+            self.reporter.finish()
+            interface.error(e.args[0])
+            exit(0)
 
     def start(self) -> None:
         start_time = time.time()
@@ -437,7 +455,12 @@ class Controller:
         if tech_result:
             self.detected_tech.update(tech_result)
 
-        interface.status_report(response, options.full_url, waf_result)
+        # Pass the method from response if available, else from options
+        current_method = getattr(response, 'method', options.http_method)
+        # Only show method column if multiple methods are configured or response has it explicitly
+        show_method = current_method if (len(options.http_methods) > 1 or getattr(response, 'is_child', False)) else None
+        
+        interface.status_report(response, options.full_url, waf_result, method=show_method)
 
         if response.status in options.recursion_status_codes and any(
             (
@@ -712,8 +735,12 @@ class Controller:
                 interface.header(f"\n--- Results for {code} ---")
                 for res in self.results:
                     if res.status == code:
-                        # Format: [CODE] SIZE - URL
-                        msg = f"[{res.status}] {res.size} - {res.full_path}"
+                        # Format: METHOD [CODE] SIZE - URL
+                        method_str = ""
+                        if hasattr(res, 'method') and res.method:
+                            method_str = f"{res.method} "
+                        
+                        msg = f"{method_str}[{res.status}] {res.size} - {res.full_path}"
                         if res.redirect:
                             msg += f" -> {res.redirect}"
                         print(msg)

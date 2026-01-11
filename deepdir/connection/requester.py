@@ -202,7 +202,7 @@ class Requester(BaseRequester):
                 self.session.auth = HttpNtlmAuth(user, password)
 
     # :path: is expected not to start with "/"
-    def request(self, path: str, proxy: str | None = None) -> Response:
+    def request(self, path: str, proxy: str | None = None, method: str | None = None) -> Response:
         # Pause if the request rate exceeded the maximum
         while self.is_rate_exceeded():
             time.sleep(0.1)
@@ -211,6 +211,8 @@ class Requester(BaseRequester):
 
         err_msg = None
         url = self._url + safequote(path)
+        
+        target_method = method or options.http_method
 
         # Why using a loop instead of max_retries argument? Check issue #1009
         for _ in range(options.max_retries + 1):
@@ -242,7 +244,7 @@ class Requester(BaseRequester):
                     # to intercept the request and handle challenges.
                     # Note: This might normalize the URL path, but it's necessary for WAF bypass.
                     origin_response = self.session.request(
-                        options.http_method,
+                        target_method,
                         url,
                         headers=self.headers,
                         data=options.data,
@@ -255,7 +257,7 @@ class Requester(BaseRequester):
                     # Use prepared request to avoid the URL path from being normalized
                     # Reference: https://github.com/psf/requests/issues/5289
                     request = requests.Request(
-                        options.http_method,
+                        target_method,
                         url,
                         headers=self.headers,
                         data=options.data,
@@ -272,8 +274,9 @@ class Requester(BaseRequester):
                     )
                 
                 response = Response(url, origin_response)
+                response.method = target_method
 
-                log_msg = f'"{options.http_method} {response.url}" {response.status} - {response.length}B'
+                log_msg = f'"{target_method} {response.url}" {response.status} - {response.length}B'
 
                 if response.redirect:
                     log_msg += f" - LOCATION: {response.redirect}"
@@ -413,7 +416,7 @@ class AsyncRequester(BaseRequester):
 
     # :path: is expected not to start with "/"
     async def request(
-        self, path: str, session: httpx.AsyncClient | None = None, replay: bool = False
+        self, path: str, session: httpx.AsyncClient | None = None, replay: bool = False, method: str | None = None
     ) -> AsyncResponse:
         while self.is_rate_exceeded():
             await asyncio.sleep(0.1)
@@ -423,6 +426,7 @@ class AsyncRequester(BaseRequester):
         err_msg = None
         url = self._url + safequote(path)
         session = session or self.session
+        target_method = method or options.http_method
 
         for _ in range(options.max_retries + 1):
             try:
@@ -433,7 +437,7 @@ class AsyncRequester(BaseRequester):
 
                 # Use "target" extension to avoid the URL path from being normalized
                 request = session.build_request(
-                    options.http_method,
+                    target_method,
                     url,
                     headers=self.headers,
                     data=options.data,
@@ -447,8 +451,9 @@ class AsyncRequester(BaseRequester):
                 )
                 response = await AsyncResponse.create(url, xresponse)
                 await xresponse.aclose()
+                response.method = target_method
 
-                log_msg = f'"{options.http_method} {response.url}" {response.status} - {response.length}B'
+                log_msg = f'"{target_method} {response.url}" {response.status} - {response.length}B'
 
                 if response.redirect:
                     log_msg += f" - LOCATION: {response.redirect}"

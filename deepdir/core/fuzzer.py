@@ -162,6 +162,7 @@ class Fuzzer(BaseFuzzer):
         self._pause_semaphore = threading.Semaphore(0)
         self._executor = None
         self._futures: list[Future] = []
+        self._print_lock = threading.Lock()
 
     def setup_scanners(self) -> None:
         # Default scanners (wildcard testers)
@@ -295,8 +296,31 @@ class Fuzzer(BaseFuzzer):
             self._hashes.setdefault(hash_, 0)
             self._hashes[hash_] += 1
 
-        for callback in self.match_callbacks:
-            callback(response)
+        # Collect responses to report (atomically)
+        to_report = [response]
+
+        # Multi-method scan: Check other methods for the found path
+        if len(options.http_methods) > 1:
+            # Get other methods excluding the one used for the current response
+            current_method = getattr(response, 'method', options.http_method)
+            other_methods = [m for m in options.http_methods if m != current_method]
+            
+            for method in other_methods:
+                try:
+                    resp2 = self._requester.request(path, method=method)
+                    resp2.is_child = True
+                    resp2.method = method
+
+                    if not self.is_excluded(resp2):
+                         to_report.append(resp2)
+                except RequestException:
+                    pass
+
+        # Report all gathered results atomically for this path
+        with self._print_lock:
+            for resp in to_report:
+                for callback in self.match_callbacks:
+                    callback(resp)
 
     def thread_proc(self) -> None:
         logger.info(f'THREAD-{threading.get_ident()} started"')
@@ -467,8 +491,36 @@ class AsyncFuzzer(BaseFuzzer):
             self._hashes.setdefault(hash_, 0)
             self._hashes[hash_] += 1
 
-        for callback in self.match_callbacks:
-            callback(response)
+        # Collect responses first
+        to_report = [response]
+            
+        # Multi-method scan: Check other methods for the found path
+        if len(options.http_methods) > 1:
+            current_method = getattr(response, 'method', options.http_method)
+            other_methods = [m for m in options.http_methods if m != current_method]
+            
+            # Helper to run request and return response or None
+            async def check_method(m):
+                try:
+                    r = await self._requester.request(path, method=m)
+                    r.is_child = True
+                    r.method = m
+                    if not self.is_excluded(r):
+                        return r
+                except RequestException:
+                    pass
+                return None
+
+            # Run all other requests concurrently
+            results = await asyncio.gather(*(check_method(m) for m in other_methods))
+            for res in results:
+                if res:
+                    to_report.append(res)
+
+        # Report all gathered results atomically (synchronously in event loop)
+        for resp in to_report:
+            for callback in self.match_callbacks:
+                callback(resp)
 
     async def task_proc(self) -> None:
         # Each task will loop until dictionary is exhausted

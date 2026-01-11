@@ -23,7 +23,7 @@ import time
 from pathlib import Path
 
 # Version format: <major version>.<minor version>.<revision>[.<month>]
-VERSION = "0.4.3"
+VERSION = "0.5.0"
 
 BANNER = fr"""
   ____                  ____  _          ____ _     ___ 

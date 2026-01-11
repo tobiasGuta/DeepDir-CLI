@@ -359,6 +359,14 @@ def parse_arguments() -> Values:
         help="HTTP method (default: GET)",
     )
     request.add_option(
+        "-M",
+        "--methods",
+        action="store",
+        dest="http_methods",
+        metavar="METHODS",
+        help="HTTP methods list, separated by commas (e.g. GET,POST,PUT)",
+    )
+    request.add_option(
         "-d", "--data", action="store", dest="data", help="HTTP request data"
     )
     request.add_option(

@@ -42,6 +42,10 @@ def parse_options() -> Dict[str, Any]:
         return vars(opt)
 
     opt.http_method = opt.http_method.upper()
+    if opt.http_methods:
+        opt.http_methods = [method.strip().upper() for method in opt.http_methods.split(",")]
+    else:
+        opt.http_methods = [opt.http_method]
 
     if opt.urls_file:
         fd = _access_file(opt.urls_file)

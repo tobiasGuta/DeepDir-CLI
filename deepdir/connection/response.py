@@ -46,6 +46,8 @@ class BaseResponse:
     datetime: str = field(init=False)
     full_path: str = field(init=False)
     path: str = field(init=False)
+    method: str | None = None
+    is_child: bool = False
 
     def __post_init__(self):
         self.datetime = time.strftime("%Y-%m-%d %H:%M:%S")

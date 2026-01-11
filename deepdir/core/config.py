@@ -45,6 +45,7 @@ class Config:
     max_time: int = 0
     target_max_time: int = 0
     http_method: str = "GET"
+    http_methods: List[str] = field(default_factory=list)
     data: Optional[str] = None
     data_file: Optional[str] = None
     nmap_report: Optional[str] = None

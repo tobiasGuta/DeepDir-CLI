@@ -29,12 +29,15 @@ Instead of just saying "403 Forbidden", this tool analyzes the response body and
 *   **`--bypass-waf`**: Integrated [`cloudscraper`](https://github.com/VeNoMouS/cloudscraper) to bypass anti-bot protections.
 *   **Smart User-Agents**: Uses `fake-useragent` library to generate realistic, up-to-date User-Agent strings.
 
-### 4. Recent Updates (v0.4.8)
+### 4. Recent Updates (v0.5.0)
+*   **Multi-Method Scanning**: Introduced `-M` / `--methods` flag to scan targets using multiple HTTP methods (e.g., `GET,POST,PUT`) simultaneously.
+    *   **Tree View Visualization**: Results for secondary methods are grouped under the primary method result with a clean, indented tree view (`|------->`), making it easy to spot method-specific behaviors (e.g., `GET` returns 405 but `POST` returns 200).
+    *   **Atomic Grouping**: Thread-safe output ensures that results for the same path are always kept together, preventing log desynchronization.
 *   **Technology Stack Detection**: Integrated `python-Wappalyzer` to automatically detect over 1,000 technologies (CMS, frameworks, servers) running on the target.
     *   Results are displayed in a dedicated **Tech Summary** at the end of the scan.
 *   **Interactive Summary**: At the end of a scan, a new interactive menu allows you to filter and view results by status code.
     *   Displays a colored summary of all status codes found (e.g., `200`, `403`, `500`).
-    *   Includes helpful descriptions for each code.
+    *   Includes helpful descriptions for each code and **HTTP Methods** used.
     *   Lets you drill down into specific codes to see the matching URLs without scrolling.
 *   **Improved UI**: The progress bar now automatically adapts to smaller terminal windows, ensuring the interface remains clean and readable.
 *   **Enhanced Stability**: Fixed issues with `CTRL+C` handling, ensuring the tool pauses and quits instantly without hanging or printing "leaky" output.
@@ -96,6 +99,7 @@ deepdir-cli -u <URL> [options]
 | `--no-wildcard` | Disable wildcard detection (show all results). |
 | `--bypass-waf` | Try to bypass WAF using cloudscraper. |
 | `--random-agent` | Use `fake-useragent` to rotate User-Agents for every request. |
+| `-M` / `--methods` | Scan with multiple HTTP methods (e.g., `GET,POST,PUT`). |
 
 ### Common Examples
 
@@ -103,6 +107,12 @@ deepdir-cli -u <URL> [options]
 ```bash
 deepdir-cli -u https://target.com -e php,html,js
 ```
+
+**Multi-Method Scan (Tree View):**
+```bash
+deepdir-cli -u https://target.com -M GET,POST,PUT
+```
+*checks every found path with POST and PUT as well, displaying results in a grouped tree.*
 
 **WAF Bypass Scan with Random Agents:**
 ```bash
@@ -225,6 +235,9 @@ Options:
     --target-max-time=SECONDS
                         Maximum runtime for a target
     --exit-on-error     Exit whenever an error occurs
+    -M METHODS, --methods=METHODS
+                        HTTP methods list, separated by commas (e.g.
+                        GET,POST,PUT)
     --bypass-waf        Try to bypass WAF using cloudscraper (requires
                         cloudscraper installed)
     --calibration       Perform calibration to detect soft 403/404 responses

@@ -116,7 +116,7 @@ class CLI:
             
         return code, color
 
-    def print_row(self, response, waf_result, full_url):
+    def print_row(self, response, waf_result, full_url, method=None):
         time_str = response.datetime.split()[1]
         status_code = response.status
         size_str = response.size
@@ -155,8 +155,19 @@ class CLI:
             
         c_type = type_color + c_type + Style.RESET_ALL
         
-        # Construct the Row
-        row = f"{c_time}{PIPE}{c_code}{PIPE}{c_type}{PIPE}{c_size}{PIPE}{c_source}{PIPE}{c_url}"
+        # Construct the Row with Method
+        method_str = f"{method:<5}" if method else ""
+        if method:
+             method_str = Fore.MAGENTA + method_str + Style.RESET_ALL + PIPE
+        
+        row = f"{c_time}{PIPE}{method_str}{c_code}{PIPE}{c_type}{PIPE}{c_size}{PIPE}{c_source}{PIPE}{c_url}"
+        
+        # Indent for non-primary methods in a grouped view
+        if getattr(response, 'is_child', False):
+             arrow = set_color("|------->", fore="cyan", style="bright")
+             # Align with method column
+             row = f"{arrow} {method_str}{c_code}{PIPE}{c_type}{PIPE}{c_size}{PIPE}{c_source}{PIPE}{c_url}"
+
         self.new_line(row)
         
         # Print history (redirect chain) on new lines if needed
@@ -164,13 +175,13 @@ class CLI:
             arrow = set_color("-->", fore="yellow", style="bright")
             self.new_line(f"{arrow} {redirect}")
 
-    def status_report(self, response, full_url, waf_result=None):
+    def status_report(self, response, full_url, waf_result=None, method=None):
         if waf_result is None:
             waf_result = {"source": "Unknown", "waf_present": False}
         elif isinstance(waf_result, str):
              waf_result = {"source": waf_result, "waf_present": True}
              
-        self.print_row(response, waf_result, full_url)
+        self.print_row(response, waf_result, full_url, method=method)
 
     def last_path(self, index, length, current_job, all_jobs, rate, errors):
         percentage = int(index / length * 100) if length > 0 else 0
