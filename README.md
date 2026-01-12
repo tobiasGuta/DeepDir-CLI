@@ -129,6 +129,12 @@ deepdir-cli -u https://target.com --calibration --mutation
 
 ---
 
+```bash
+-M
+```
+
+<img width="1752" height="747" alt="image" src="https://github.com/user-attachments/assets/85f6caca-0db8-448d-a180-c315971e33df" />
+
 ## Full Options
 
 ```text
