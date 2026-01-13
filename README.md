@@ -72,6 +72,10 @@ This version includes a major backend overhaul to adopt modern Python practices,
     ```bash
     pip install -r requirements.txt
     ```
+3. Install
+    ```bash
+    pip install -e .
+    ```
 
 **OR**
 ```bash
